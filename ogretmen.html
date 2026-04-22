@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğretmen Paneli | Not Kayıt Sistemi</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
+  <script src="js/ogretmen.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar glass-card">
+      <div class="sidebar-brand">
+        <div class="mini-mark">👨‍🏫</div>
+        <div>
+          <strong>Akademi</strong>
+          <span>Öğretmen Paneli</span>
+        </div>
+      </div>
+      <nav class="side-nav" aria-label="Öğretmen menüsü">
+        <button class="nav-item active" type="button" data-view="grade-entry">📝 Not Gir</button>
+        <button class="nav-item" type="button" data-view="students">👥 Öğrencilerim</button>
+        <button class="nav-item" type="button" data-view="courses">📋 Derslerim</button>
+        <button class="nav-item" type="button" data-view="profile">👤 Profilim</button>
+      </nav>
+    </aside>
+
+    <div id="sidebarScrim" class="sidebar-scrim"></div>
+
+    <div class="content-shell">
+      <header class="topbar glass-card">
+        <button class="hamburger" type="button" data-sidebar-toggle aria-label="Menüyü aç">☰</button>
+        <div class="topbar-title">
+          <div class="top-logo" aria-hidden="true">🏫</div>
+          <div>
+            <p class="eyebrow">Akademi Lisesi</p>
+            <h1>Hoşgeldin, <span id="teacherName">Dr. Ayşe Kaya</span></h1>
+          </div>
+        </div>
+        <button class="danger-button" type="button" data-logout>🚪 Çıkış</button>
+      </header>
+
+      <main class="page-content">
+        <section class="view-section active" data-section="grade-entry">
+          <div class="section-heading">
+            <p class="eyebrow">Değerlendirme</p>
+            <h2>Not Gir</h2>
+          </div>
+          <form id="gradeForm" class="form-card glass-card">
+            <div class="form-grid">
+              <label class="field">
+                <span>Ders seç</span>
+                <select id="gradeCourse">
+                  <option value="">Ders seçiniz</option>
+                  <option>Algoritma ve Programlama</option>
+                  <option>Web Teknolojileri</option>
+                  <option>Yazılım Mühendisliği</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Öğrenci seç</span>
+                <select id="gradeStudent">
+                  <option value="">Öğrenci seçiniz</option>
+                  <option>Ahmet Yılmaz</option>
+                  <option>Zeynep Demir</option>
+                  <option>Emir Kaya</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Vize notu</span>
+                <input id="midtermGrade" type="number" min="0" max="100" placeholder="0-100">
+              </label>
+              <label class="field">
+                <span>Final notu</span>
+                <input id="finalGrade" type="number" min="0" max="100" placeholder="0-100">
+              </label>
+            </div>
+            <button class="primary-button" type="submit">Kaydet</button>
+          </form>
+        </section>
+
+        <section class="view-section" data-section="students">
+          <div class="section-heading">
+            <p class="eyebrow">Ders öğrencileri</p>
+            <h2>Öğrencilerim</h2>
+          </div>
+          <label class="search-box">
+            <span>🔎</span>
+            <input id="teacherStudentSearch" type="search" placeholder="Öğrenci ara">
+          </label>
+          <div class="table-wrap glass-card">
+            <table>
+              <thead>
+                <tr><th>Ad</th><th>No</th><th>Ders</th><th>Ortalama</th><th>Durum</th></tr>
+              </thead>
+              <tbody id="teacherStudentRows">
+                <tr data-search="ahmet yılmaz 202401034 algoritma ve programlama"><td>Ahmet Yılmaz</td><td>202401034</td><td>Algoritma ve Programlama</td><td>87.0</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr data-search="zeynep demir 202401041 web teknolojileri"><td>Zeynep Demir</td><td>202401041</td><td>Web Teknolojileri</td><td>91.4</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr data-search="emir kaya 202401052 yazılım mühendisliği"><td>Emir Kaya</td><td>202401052</td><td>Yazılım Mühendisliği</td><td>68.2</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr data-search="naz aksoy 202401063 algoritma ve programlama"><td>Naz Aksoy</td><td>202401063</td><td>Algoritma ve Programlama</td><td>44.8</td><td><span class="badge danger">Kaldı</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="courses">
+          <div class="section-heading">
+            <p class="eyebrow">Sorumlu dersler</p>
+            <h2>Derslerim</h2>
+          </div>
+          <div class="course-grid">
+            <article class="info-card glass-card"><span>BLM101</span><h3>Algoritma ve Programlama</h3><p>42 öğrenci</p><strong>5 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM210</span><h3>Web Teknolojileri</h3><p>36 öğrenci</p><strong>4 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM330</span><h3>Yazılım Mühendisliği</h3><p>28 öğrenci</p><strong>4 Kredi</strong></article>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="profile">
+          <div class="section-heading">
+            <p class="eyebrow">Hesap bilgileri</p>
+            <h2>Profilim</h2>
+          </div>
+          <div class="form-card glass-card">
+            <div class="readonly-grid">
+              <label class="field"><span>Ad Soyad</span><input value="Dr. Ayşe Kaya" readonly></label>
+              <label class="field"><span>Sicil</span><input value="AKD-2187" readonly></label>
+              <label class="field"><span>Unvan</span><input value="Öğretim Görevlisi Doktor" readonly></label>
+              <label class="field"><span>E-posta</span><input value="ayse.kaya@okul.edu.tr" readonly></label>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

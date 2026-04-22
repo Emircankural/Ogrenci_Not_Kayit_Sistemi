@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğrenci Paneli | Not Kayıt Sistemi</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
+  <script src="js/ogrenci.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar glass-card">
+      <div class="sidebar-brand">
+        <div class="mini-mark">🎓</div>
+        <div>
+          <strong>Akademi</strong>
+          <span>Öğrenci Paneli</span>
+        </div>
+      </div>
+      <nav class="side-nav" aria-label="Öğrenci menüsü">
+        <button class="nav-item active" type="button" data-view="grades">📊 Notlarım</button>
+        <button class="nav-item" type="button" data-view="courses">📅 Derslerim</button>
+        <button class="nav-item" type="button" data-view="profile">👤 Profilim</button>
+      </nav>
+    </aside>
+
+    <div id="sidebarScrim" class="sidebar-scrim"></div>
+
+    <div class="content-shell">
+      <header class="topbar glass-card">
+        <button class="hamburger" type="button" data-sidebar-toggle aria-label="Menüyü aç">☰</button>
+        <div class="topbar-title">
+          <div class="top-logo" aria-hidden="true">🎓</div>
+          <div>
+            <p class="eyebrow">Akademi Lisesi</p>
+            <h1>Hoşgeldin, <span id="studentName">Ahmet Yılmaz</span></h1>
+          </div>
+        </div>
+        <button class="danger-button" type="button" data-logout>🚪 Çıkış</button>
+      </header>
+
+      <main class="page-content">
+        <section class="view-section active" data-section="grades">
+          <div class="section-heading">
+            <p class="eyebrow">Akademik durum</p>
+            <h2>Notlarım</h2>
+          </div>
+          <div class="table-wrap glass-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ders Adı</th>
+                  <th>Vize</th>
+                  <th>Final</th>
+                  <th>Ortalama</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Algoritma ve Programlama</td><td>82</td><td>90</td><td>87.0</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr><td>Veri Tabanı Yönetimi</td><td>74</td><td>80</td><td>77.6</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr><td>Web Teknolojileri</td><td>91</td><td>88</td><td>89.2</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr><td>Lineer Cebir</td><td>45</td><td>52</td><td>49.2</td><td><span class="badge danger">Kaldı</span></td></tr>
+                <tr><td>İşletim Sistemleri</td><td>68</td><td>76</td><td>72.8</td><td><span class="badge success">Geçti</span></td></tr>
+                <tr><td>Yazılım Mühendisliği</td><td>86</td><td>84</td><td>84.8</td><td><span class="badge success">Geçti</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="courses">
+          <div class="section-heading">
+            <p class="eyebrow">Dönem dersleri</p>
+            <h2>Derslerim</h2>
+          </div>
+          <div class="course-grid">
+            <article class="info-card glass-card"><span>BLM101</span><h3>Algoritma ve Programlama</h3><p>Öğr. Dr. Ayşe Kaya</p><strong>5 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM204</span><h3>Veri Tabanı Yönetimi</h3><p>Doç. Dr. Mert Aydın</p><strong>4 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM210</span><h3>Web Teknolojileri</h3><p>Öğr. Gör. Deniz Arslan</p><strong>4 Kredi</strong></article>
+            <article class="info-card glass-card"><span>MAT112</span><h3>Lineer Cebir</h3><p>Prof. Dr. Selin Güneş</p><strong>3 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM302</span><h3>İşletim Sistemleri</h3><p>Dr. Kerem Yıldız</p><strong>5 Kredi</strong></article>
+            <article class="info-card glass-card"><span>BLM330</span><h3>Yazılım Mühendisliği</h3><p>Doç. Dr. Ece Demir</p><strong>4 Kredi</strong></article>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="profile">
+          <div class="section-heading">
+            <p class="eyebrow">Hesap bilgileri</p>
+            <h2>Profilim</h2>
+          </div>
+          <div class="form-card glass-card">
+            <div class="readonly-grid">
+              <label class="field"><span>Ad Soyad</span><input value="Ahmet Yılmaz" readonly></label>
+              <label class="field"><span>Öğrenci No</span><input value="202401034" readonly></label>
+              <label class="field"><span>Bölüm</span><input value="Bilgisayar Mühendisliği" readonly></label>
+              <label class="field"><span>E-posta</span><input value="ahmet.yilmaz@okul.edu.tr" readonly></label>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

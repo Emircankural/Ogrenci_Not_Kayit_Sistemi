@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Paneli | Not Kayıt Sistemi</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js" defer></script>
+  <script src="js/admin.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar glass-card">
+      <div class="sidebar-brand">
+        <div class="mini-mark">⚙️</div>
+        <div>
+          <strong>Admin</strong>
+          <span>Sistem Yönetimi</span>
+        </div>
+      </div>
+      <nav class="side-nav" aria-label="Admin menüsü">
+        <button class="nav-item active" type="button" data-view="stats">📊 İstatistikler</button>
+        <button class="nav-item" type="button" data-view="add-student">➕ Öğrenci Ekle</button>
+        <button class="nav-item" type="button" data-view="add-teacher">➕ Öğretmen Ekle</button>
+        <button class="nav-item" type="button" data-view="add-course">📚 Ders Ekle</button>
+        <button class="nav-item" type="button" data-view="student-list">👥 Öğrenci Listesi</button>
+        <button class="nav-item" type="button" data-view="teacher-list">👨‍🏫 Öğretmen Listesi</button>
+      </nav>
+    </aside>
+
+    <div id="sidebarScrim" class="sidebar-scrim"></div>
+
+    <div class="content-shell">
+      <header class="topbar glass-card">
+        <button class="hamburger" type="button" data-sidebar-toggle aria-label="Menüyü aç">☰</button>
+        <div>
+          <p class="eyebrow">Yetkili erişim</p>
+          <h1>⚙️ Admin Paneli</h1>
+        </div>
+        <button class="danger-button admin-exit" type="button" data-logout>Çıkış</button>
+      </header>
+
+      <main class="page-content">
+        <section class="view-section active" data-section="stats">
+          <div class="section-heading">
+            <p class="eyebrow">Genel görünüm</p>
+            <h2>İstatistikler</h2>
+          </div>
+          <div class="stats-grid">
+            <article class="stat-card glass-card"><span>Toplam Öğrenci</span><strong>128</strong><small>+12 bu dönem</small></article>
+            <article class="stat-card glass-card"><span>Toplam Öğretmen</span><strong>24</strong><small>8 akademik birim</small></article>
+            <article class="stat-card glass-card"><span>Toplam Ders</span><strong>36</strong><small>Aktif müfredat</small></article>
+            <article class="stat-card glass-card"><span>Ort. Not</span><strong>72.4</strong><small>Genel başarı</small></article>
+          </div>
+          <div class="chart-card glass-card">
+            <div class="section-heading compact">
+              <p class="eyebrow">Ders başarı ortalamaları</p>
+              <h2>Saf CSS Bar Chart</h2>
+            </div>
+            <div class="bar-row"><span>BLM101</span><div><i style="width: 87%"></i></div><strong>87</strong></div>
+            <div class="bar-row"><span>BLM204</span><div><i style="width: 78%"></i></div><strong>78</strong></div>
+            <div class="bar-row"><span>BLM210</span><div><i style="width: 91%"></i></div><strong>91</strong></div>
+            <div class="bar-row"><span>MAT112</span><div><i style="width: 49%"></i></div><strong>49</strong></div>
+            <div class="bar-row"><span>BLM330</span><div><i style="width: 73%"></i></div><strong>73</strong></div>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="add-student">
+          <div class="section-heading">
+            <p class="eyebrow">Kayıt işlemleri</p>
+            <h2>Öğrenci Ekle</h2>
+          </div>
+          <form id="addStudentForm" class="form-card glass-card">
+            <div class="form-grid">
+              <label class="field"><span>Ad Soyad</span><input id="studentFullName" type="text" placeholder="Ad Soyad"></label>
+              <label class="field"><span>Öğrenci No</span><input id="studentNumber" type="text" placeholder="2024..."></label>
+              <label class="field"><span>E-posta</span><input id="studentEmail" type="email" placeholder="ogrenci@okul.edu.tr"></label>
+              <label class="field"><span>Şifre</span><input id="studentPassword" type="password" placeholder="Geçici şifre"></label>
+              <label class="field">
+                <span>Bölüm</span>
+                <select id="studentDepartment">
+                  <option value="">Bölüm seçiniz</option>
+                  <option>Bilgisayar Mühendisliği</option>
+                  <option>Elektrik Elektronik Mühendisliği</option>
+                  <option>Endüstri Mühendisliği</option>
+                  <option>Matematik</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-button" type="submit">Kaydet</button>
+          </form>
+        </section>
+
+        <section class="view-section" data-section="add-teacher">
+          <div class="section-heading">
+            <p class="eyebrow">Akademik kadro</p>
+            <h2>Öğretmen Ekle</h2>
+          </div>
+          <form id="addTeacherForm" class="form-card glass-card">
+            <div class="form-grid">
+              <label class="field"><span>Ad Soyad</span><input id="teacherFullName" type="text" placeholder="Ad Soyad"></label>
+              <label class="field"><span>Sicil No</span><input id="teacherRegistry" type="text" placeholder="AKD-..."></label>
+              <label class="field"><span>E-posta</span><input id="teacherEmail" type="email" placeholder="ogretmen@okul.edu.tr"></label>
+              <label class="field"><span>Şifre</span><input id="teacherPassword" type="password" placeholder="Geçici şifre"></label>
+              <label class="field">
+                <span>Unvan</span>
+                <select id="teacherTitle">
+                  <option value="">Unvan seçiniz</option>
+                  <option>Prof. Dr.</option>
+                  <option>Doç. Dr.</option>
+                  <option>Dr. Öğr. Üyesi</option>
+                  <option>Öğr. Gör.</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-button" type="submit">Kaydet</button>
+          </form>
+        </section>
+
+        <section class="view-section" data-section="add-course">
+          <div class="section-heading">
+            <p class="eyebrow">Müfredat</p>
+            <h2>Ders Ekle</h2>
+          </div>
+          <form id="addCourseForm" class="form-card glass-card">
+            <div class="form-grid">
+              <label class="field"><span>Ders Adı</span><input id="courseName" type="text" placeholder="Ders adı"></label>
+              <label class="field"><span>Ders Kodu</span><input id="courseCode" type="text" placeholder="BLM101"></label>
+              <label class="field"><span>Kredi</span><input id="courseCredit" type="number" min="1" max="10" placeholder="4"></label>
+              <label class="field">
+                <span>Öğretmen Ata</span>
+                <select id="courseTeacher">
+                  <option value="">Öğretmen seçiniz</option>
+                  <option>Dr. Ayşe Kaya</option>
+                  <option>Doç. Dr. Mert Aydın</option>
+                  <option>Prof. Dr. Selin Güneş</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-button" type="submit">Kaydet</button>
+          </form>
+        </section>
+
+        <section class="view-section" data-section="student-list">
+          <div class="section-heading">
+            <p class="eyebrow">Kayıtlı öğrenciler</p>
+            <h2>Öğrenci Listesi</h2>
+          </div>
+          <label class="search-box"><span>🔎</span><input id="adminStudentSearch" type="search" placeholder="Öğrenci ara"></label>
+          <div class="table-wrap glass-card">
+            <table>
+              <thead><tr><th>Ad Soyad</th><th>No</th><th>Bölüm</th><th>E-posta</th><th>İşlem</th></tr></thead>
+              <tbody id="adminStudentRows">
+                <tr data-search="ahmet yılmaz 202401034 bilgisayar mühendisliği"><td>Ahmet Yılmaz</td><td>202401034</td><td>Bilgisayar Müh.</td><td>ahmet.yilmaz@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+                <tr data-search="zeynep demir 202401041 endüstri mühendisliği"><td>Zeynep Demir</td><td>202401041</td><td>Endüstri Müh.</td><td>zeynep.demir@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+                <tr data-search="emir kaya 202401052 matematik"><td>Emir Kaya</td><td>202401052</td><td>Matematik</td><td>emir.kaya@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="teacher-list">
+          <div class="section-heading">
+            <p class="eyebrow">Akademik personel</p>
+            <h2>Öğretmen Listesi</h2>
+          </div>
+          <label class="search-box"><span>🔎</span><input id="adminTeacherSearch" type="search" placeholder="Öğretmen ara"></label>
+          <div class="table-wrap glass-card">
+            <table>
+              <thead><tr><th>Ad Soyad</th><th>Sicil</th><th>Unvan</th><th>E-posta</th><th>İşlem</th></tr></thead>
+              <tbody id="adminTeacherRows">
+                <tr data-search="ayşe kaya akd-2187 dr öğretim görevlisi"><td>Ayşe Kaya</td><td>AKD-2187</td><td>Dr. Öğr. Üyesi</td><td>ayse.kaya@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+                <tr data-search="mert aydın akd-1844 doç dr"><td>Mert Aydın</td><td>AKD-1844</td><td>Doç. Dr.</td><td>mert.aydin@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+                <tr data-search="selin güneş akd-1022 prof dr"><td>Selin Güneş</td><td>AKD-1022</td><td>Prof. Dr.</td><td>selin.gunes@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
