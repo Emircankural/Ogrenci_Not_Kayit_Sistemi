@@ -13,8 +13,9 @@ const DEMO_USERS = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState("login");
-  const [user, setUser] = useState(null);
+  const isTranscriptPreview = new URLSearchParams(window.location.search).get("view") === "transcript";
+  const [screen, setScreen] = useState(isTranscriptPreview ? "ogrenci" : "login");
+  const [user, setUser] = useState(isTranscriptPreview ? { role: "ogrenci", name: "Mehmet Demir" } : null);
   const [toast, setToast] = useState("");
 
   const showToast = useCallback((message) => setToast(message), []);
@@ -47,7 +48,7 @@ export default function App() {
     <>
       <GlobalStyles />
       {screen === "login" && <Login onLogin={handleLogin} />}
-      {screen === "ogrenci" && <StudentPanel user={user} onLogout={logout} />}
+      {screen === "ogrenci" && <StudentPanel user={user} onLogout={logout} initialActive={isTranscriptPreview ? "transcript" : "grades"} previewOnly={isTranscriptPreview} />}
       {screen === "ogretmen" && <TeacherPanel user={user} onLogout={logout} showToast={showToast} />}
       {screen === "admin" && <AdminPanel onLogout={logout} showToast={showToast} />}
       <Toast message={toast} onDone={() => setToast("")} />

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
   --primary: #0f172a;
@@ -46,6 +46,10 @@ select {
 
 button {
   cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 h1,
@@ -629,6 +633,324 @@ tbody tr:hover {
   background: rgba(239, 68, 68, 0.15);
 }
 
+.transcript-admin-panel {
+  padding: 20px;
+}
+
+.transcript-selector,
+.transcript-course-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.transcript-workspace {
+  margin-top: 22px;
+}
+
+.transcript-management-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.selected-student {
+  margin-bottom: 10px;
+  color: white;
+  font-weight: 900;
+}
+
+.gpa-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gpa-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  color: #d8e7f7;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 42, 0.44);
+  font-weight: 800;
+}
+
+.gpa-summary strong {
+  margin-left: 4px;
+  color: var(--accent);
+}
+
+.preview-button,
+.add-course-button {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.transcript-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+}
+
+.transcript-course-form {
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.transcript-course-form .field + .field {
+  margin-top: 0;
+}
+
+.transcript-management-table {
+  margin-top: 10px;
+}
+
+.transcript-management-table table {
+  min-width: 980px;
+}
+
+.transcript-management-table td,
+.transcript-management-table th {
+  padding: 13px 12px;
+}
+
+.transcript-row-actions {
+  display: flex;
+  gap: 8px;
+  min-width: 176px;
+}
+
+.transcript-row-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  color: white;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius);
+  background: rgba(56, 189, 248, 0.12);
+  font-weight: 800;
+}
+
+.transcript-row-actions button:last-child {
+  border-color: rgba(239, 68, 68, 0.32);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.inline-grade-select {
+  min-height: 34px;
+  color: white;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: var(--radius);
+  background: rgba(15, 23, 42, 0.86);
+  padding: 0 8px;
+}
+
+.transcript-mode {
+  color: #111827;
+  background: #ffffff;
+}
+
+.transcript-mode .app-shell {
+  display: block;
+  min-height: auto;
+  padding: 0;
+}
+
+.transcript-mode .sidebar,
+.transcript-mode .topbar,
+.transcript-mode .sidebar-scrim {
+  display: none;
+}
+
+.transcript-mode .page-content {
+  padding: 0;
+}
+
+.transcript-mode .content-shell {
+  width: 100%;
+}
+
+.transcript-section.active {
+  display: block;
+}
+
+.transcript-document {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+  color: #111827;
+  background: #ffffff;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 11.5px;
+  line-height: 1.38;
+}
+
+.transcript-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.transcript-back,
+.transcript-print {
+  min-height: 38px;
+  padding: 0 14px;
+  color: #0f172a;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.transcript-print {
+  color: #ffffff;
+  border-color: #0f172a;
+  background: #0f172a;
+}
+
+.transcript-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #111827;
+}
+
+.transcript-header h2 {
+  color: #000000;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.transcript-block {
+  margin-top: 14px;
+}
+
+.transcript-block h3,
+.semester-block h3 {
+  margin: 0;
+  color: #111827;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.student-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+}
+
+.student-info-grid p {
+  display: grid;
+  grid-template-columns: 132px 12px minmax(0, 1fr);
+  gap: 2px;
+  min-height: 22px;
+  color: #111827;
+}
+
+.student-info-grid strong {
+  font-weight: 800;
+}
+
+.transcript-table-wrap {
+  width: 100%;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.transcript-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  color: #111827;
+}
+
+.transcript-table th,
+.transcript-table td {
+  padding: 7px 8px;
+  color: #111827;
+  text-align: left;
+  border: 1px solid #d1d5db;
+}
+
+.transcript-table th {
+  color: #111827;
+  background: #f3f4f6;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.transcript-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.transcript-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.semester-block {
+  margin-top: 14px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.semester-block h3 {
+  padding: 8px 10px;
+  border: 1px solid #bbf7d0;
+  border-bottom: 3px solid #16a34a;
+  background: #f0fdf4;
+}
+
+.grade {
+  font-weight: 900;
+}
+
+.grade-high {
+  color: #166534 !important;
+}
+
+.grade-good {
+  color: #111827 !important;
+}
+
+.grade-warn {
+  color: #f97316 !important;
+}
+
+.grade-fail,
+.fail-text {
+  color: #dc2626 !important;
+  font-weight: 900;
+}
+
+.transcript-footer {
+  margin-top: 18px;
+  padding-top: 10px;
+  color: #111827;
+  border-top: 1px solid #d1d5db;
+  text-align: center;
+  font-weight: 700;
+}
+
 .chart-card {
   margin-top: 18px;
 }
@@ -767,6 +1089,16 @@ tbody tr:hover {
   .topbar .danger-button {
     min-width: max-content;
   }
+
+  .transcript-management-top,
+  .transcript-selector {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .preview-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
@@ -785,12 +1117,96 @@ tbody tr:hover {
   .form-grid,
   .readonly-grid,
   .course-grid,
+  .student-info-grid,
+  .transcript-course-form,
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .transcript-document {
+    padding: 16px;
+  }
+
+  .transcript-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .transcript-back,
+  .transcript-print {
+    width: 100%;
+  }
+
+  .student-info-grid p {
+    grid-template-columns: 126px 10px minmax(0, 1fr);
   }
 
   .bar-row {
     grid-template-columns: 70px minmax(0, 1fr) 38px;
     gap: 10px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 9mm;
+  }
+
+  html,
+  body {
+    width: auto;
+    min-height: auto;
+    color: #111827;
+    background: #ffffff !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .sidebar-scrim,
+  .toast,
+  .transcript-toolbar {
+    display: none !important;
+  }
+
+  .app-shell,
+  .content-shell,
+  .page-content,
+  .transcript-section.active {
+    display: block !important;
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .view-section:not(.transcript-section) {
+    display: none !important;
+  }
+
+  .transcript-document {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    font-size: 11px;
+  }
+
+  .transcript-table-wrap {
+    overflow: visible;
+  }
+
+  .transcript-table {
+    min-width: 0;
+    page-break-inside: auto;
+  }
+
+  .transcript-table th,
+  .transcript-table td {
+    padding: 5px 6px;
+  }
+
+  .semester-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

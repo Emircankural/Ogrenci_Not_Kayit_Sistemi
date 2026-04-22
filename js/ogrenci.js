@@ -14,15 +14,22 @@ function setupStudentNavigation() {
   const sidebar = document.getElementById("sidebar");
   const scrim = document.getElementById("sidebarScrim");
 
+  const activateView = (view) => {
+    studentState.activeView = view;
+    document.body.classList.toggle("transcript-mode", view === "transcript");
+    document.querySelectorAll(".nav-item").forEach((item) => {
+      item.classList.toggle("active", item.dataset.view === view);
+    });
+    document.querySelectorAll(".view-section").forEach((section) => {
+      section.classList.toggle("active", section.dataset.section === view);
+    });
+    sidebar.classList.remove("open");
+    scrim.classList.remove("show");
+  };
+
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.addEventListener("click", () => {
-      studentState.activeView = button.dataset.view;
-      document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("active"));
-      document.querySelectorAll(".view-section").forEach((section) => section.classList.remove("active"));
-      button.classList.add("active");
-      document.querySelector(`[data-section="${studentState.activeView}"]`).classList.add("active");
-      sidebar.classList.remove("open");
-      scrim.classList.remove("show");
+      activateView(button.dataset.view);
     });
   });
 
@@ -35,12 +42,30 @@ function setupStudentNavigation() {
     sidebar.classList.remove("open");
     scrim.classList.remove("show");
   });
+
+  document.querySelector("[data-print-transcript]").addEventListener("click", () => {
+    window.print();
+  });
+
+  document.querySelector("[data-transcript-back]").addEventListener("click", () => {
+    activateView("grades");
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") === "transcript") {
+    activateView("transcript");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const session = requireSession("ogrenci");
+  const params = new URLSearchParams(window.location.search);
+  const session = params.get("view") === "transcript" && getSession()?.role === "admin"
+    ? getSession()
+    : requireSession("ogrenci");
   if (!session) return;
 
-  document.getElementById("studentName").textContent = session.name;
+  if (session.role === "ogrenci") {
+    document.getElementById("studentName").textContent = session.name;
+  }
   setupStudentNavigation();
 });

@@ -1,6 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { Settings } from "lucide-react";
 import { adminCourses, adminStudents, adminTeachers } from "../data/mockData.js";
+import {
+  calculateTranscriptSummary,
+  cloneTranscriptCourses,
+  getCourseResult,
+  getGradeClassName,
+  gradeCoefficients,
+  transcriptGradeOptions,
+  transcriptStudents
+} from "../data/transcriptData.js";
 import { colors } from "../utils/theme.js";
 import Modal from "./Modal.jsx";
 import { DangerButton, PrimaryButton, SelectInput, Sidebar, StatCard, TextInput, Topbar } from "./Shared.jsx";
@@ -9,7 +18,8 @@ const navItems = [
   { key: "stats", label: "📊 İstatistikler" },
   { key: "students", label: "👥 Öğrenci Yönetimi" },
   { key: "teachers", label: "👨‍🏫 Öğretmen Yönetimi" },
-  { key: "courses", label: "📚 Ders Yönetimi" }
+  { key: "courses", label: "📚 Ders Yönetimi" },
+  { key: "transcripts", label: "📄 Transkript Yönetimi" }
 ];
 
 const emptyStudent = { name: "", no: "", email: "", password: "", department: "", year: "" };
@@ -115,6 +125,7 @@ export default function AdminPanel({ onLogout, showToast }) {
               onDelete={(id) => removeRow("course", id)}
             />
           )}
+          {active === "transcripts" && <TranscriptManagement showToast={showToast} />}
         </main>
       </div>
 
@@ -231,6 +242,190 @@ function CourseManagement({ rows, search, setSearch, onAdd, onEdit, onDelete }) 
         </tbody>
       </TableShell>
     </section>
+  );
+}
+
+function TranscriptManagement({ showToast }) {
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [search, setSearch] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [draftGrade, setDraftGrade] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCourse, setNewCourse] = useState({ semester: "1", code: "", name: "", ects: "", grade: "AA" });
+  const summary = calculateTranscriptSummary(courses);
+
+  const selectStudent = (student) => {
+    setSelectedStudent(student);
+    setSearch(`${student.number} — ${student.name}`);
+    setCourses(cloneTranscriptCourses());
+    setEditingId(null);
+    setShowAddForm(false);
+  };
+
+  const handleSearch = (value) => {
+    setSearch(value);
+    const clean = value.trim().toLocaleLowerCase("tr-TR");
+    const exact = transcriptStudents.find((student) => `${student.number} — ${student.name}`.toLocaleLowerCase("tr-TR") === clean || student.number === value.trim());
+    const matches = transcriptStudents.filter((student) => clean.length >= 3 && `${student.number} — ${student.name}`.toLocaleLowerCase("tr-TR").includes(clean));
+    const student = exact || (matches.length === 1 ? matches[0] : null);
+    if (student) selectStudent(student);
+  };
+
+  const saveGrade = (id) => {
+    setCourses((current) => current.map((course) => course.id === id ? { ...course, grade: draftGrade } : course));
+    setEditingId(null);
+    showToast("Ders notu güncellendi.");
+  };
+
+  const deleteCourse = (id) => {
+    if (!window.confirm("Bu dersi transkriptten silmek istediğinize emin misiniz?")) return;
+    setCourses((current) => current.filter((course) => course.id !== id));
+    showToast("Ders transkriptten silindi.");
+  };
+
+  const addCourse = (event) => {
+    event.preventDefault();
+    if (!newCourse.code.trim() || !newCourse.name.trim() || newCourse.ects === "") {
+      showToast("Ders eklemek için kod, ad ve AKTS alanlarını doldurun.");
+      return;
+    }
+    setCourses((current) => [
+      ...current,
+      {
+        id: `new-${Date.now()}`,
+        semester: Number(newCourse.semester),
+        code: newCourse.code.trim(),
+        name: newCourse.name.trim(),
+        status: "Zorunlu",
+        language: "Türkçe",
+        ects: Number(newCourse.ects),
+        grade: newCourse.grade
+      }
+    ]);
+    setNewCourse({ semester: "1", code: "", name: "", ects: "", grade: "AA" });
+    setShowAddForm(false);
+    showToast("Ders transkripte eklendi.");
+  };
+
+  const openPreview = () => {
+    window.open(`${window.location.origin}${window.location.pathname}?view=transcript`, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <section className="grid gap-5">
+      <div className="card-flat accent-top grid gap-4 p-5 xl:grid-cols-[1fr_auto] xl:items-end">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextInput
+            label="Öğrenci Seç"
+            value={search}
+            onChange={(event) => handleSearch(event.target.value)}
+            list="transcript-students"
+            placeholder="Öğrenci No veya Ad ile ara..."
+          />
+          <datalist id="transcript-students">
+            {transcriptStudents.map((student) => <option key={student.number} value={`${student.number} — ${student.name}`} />)}
+          </datalist>
+          <SelectInput
+            label="Liste"
+            value={selectedStudent?.number || ""}
+            onChange={(event) => {
+              const student = transcriptStudents.find((item) => item.number === event.target.value);
+              if (student) selectStudent(student);
+            }}
+          >
+            <option value="">Öğrenci seçiniz</option>
+            {transcriptStudents.map((student) => <option key={student.number} value={student.number}>{student.number} — {student.name}</option>)}
+          </SelectInput>
+        </div>
+        <PrimaryButton type="button" onClick={openPreview}>👁 Transkript Görüntüle</PrimaryButton>
+      </div>
+
+      {selectedStudent && (
+        <>
+          <div className="card-flat accent-left flex flex-wrap items-center justify-between gap-3 p-5">
+            <div>
+              <p className="font-extrabold" style={{ color: colors.textDark }}>{selectedStudent.number} — {selectedStudent.name}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <SummaryPill label="Toplam AKTS" value={summary.totalEcts} />
+                <SummaryPill label="Başarılan AKTS" value={summary.earnedEcts} />
+                <SummaryPill label="GNO" value={summary.gpa} />
+              </div>
+            </div>
+            <PrimaryButton type="button" onClick={() => setShowAddForm((current) => !current)}>➕ Ders Ekle</PrimaryButton>
+          </div>
+
+          {showAddForm && (
+            <form className="card-flat grid gap-4 p-5 md:grid-cols-3 xl:grid-cols-6" onSubmit={addCourse}>
+              <SelectInput label="Yarıyıl" value={newCourse.semester} onChange={(event) => setNewCourse({ ...newCourse, semester: event.target.value })}>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((semester) => <option key={semester}>{semester}</option>)}
+              </SelectInput>
+              <TextInput label="Ders Kodu" value={newCourse.code} onChange={(event) => setNewCourse({ ...newCourse, code: event.target.value })} placeholder="1010031" />
+              <TextInput label="Ders Adı" value={newCourse.name} onChange={(event) => setNewCourse({ ...newCourse, name: event.target.value })} placeholder="Ders adı" />
+              <TextInput label="AKTS" type="number" min="0" value={newCourse.ects} onChange={(event) => setNewCourse({ ...newCourse, ects: event.target.value })} />
+              <SelectInput label="Başarı Notu" value={newCourse.grade} onChange={(event) => setNewCourse({ ...newCourse, grade: event.target.value })}>
+                {transcriptGradeOptions.map((grade) => <option key={grade}>{grade}</option>)}
+              </SelectInput>
+              <PrimaryButton type="submit" className="self-end">Ekle</PrimaryButton>
+            </form>
+          )}
+
+          <div className="card-flat accent-left table-scroll p-4">
+            <table className="w-full border-collapse text-left">
+              <thead><tr>{["Yarıyıl", "Ders Kodu", "Ders Adı", "AKTS", "Başarı Notu", "Katsayı", "Başarı Durumu", "İşlemler"].map((head) => <Th key={head}>{head}</Th>)}</tr></thead>
+              <tbody>
+                {[...courses].sort((a, b) => a.semester - b.semester || a.code.localeCompare(b.code, "tr-TR")).map((course) => {
+                  const result = getCourseResult(course.grade);
+                  const isEditing = editingId === course.id;
+                  return (
+                    <tr key={course.id} className="border-t" style={{ borderColor: colors.grayBorder }}>
+                      <Td>{course.semester}</Td>
+                      <Td>{course.code}</Td>
+                      <Td strong>{course.name}</Td>
+                      <Td>{course.ects}</Td>
+                      <Td>
+                        {isEditing ? (
+                          <select className="focus-ring h-10 rounded-lg border bg-white px-3 text-sm font-bold" style={{ borderColor: colors.grayBorder }} value={draftGrade} onChange={(event) => setDraftGrade(event.target.value)}>
+                            {transcriptGradeOptions.map((grade) => <option key={grade}>{grade}</option>)}
+                          </select>
+                        ) : (
+                          <span className={`transcript-grade ${getGradeClassName(course.grade)}`}>{course.grade}</span>
+                        )}
+                      </Td>
+                      <Td>{isEditing ? gradeCoefficients[draftGrade] : gradeCoefficients[course.grade]}</Td>
+                      <Td><span className={result === "Başarısız" ? "transcript-grade-fail" : ""}>{isEditing ? getCourseResult(draftGrade) : result}</span></Td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                          {isEditing ? (
+                            <>
+                              <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.greenMain }} onClick={() => saveGrade(course.id)}>✅ Kaydet</button>
+                              <DangerButton type="button" onClick={() => setEditingId(null)}>❌ İptal</DangerButton>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.greenMain }} onClick={() => { setEditingId(course.id); setDraftGrade(course.grade); }}>✏️ Düzenle</button>
+                              <DangerButton type="button" onClick={() => deleteCourse(course.id)}>🗑️ Sil</DangerButton>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function SummaryPill({ label, value }) {
+  return (
+    <span className="rounded-lg border px-3 py-2 text-sm font-extrabold" style={{ borderColor: colors.grayBorder, background: colors.greenBg, color: colors.greenMain }}>
+      {label}: {value}
+    </span>
   );
 }
 

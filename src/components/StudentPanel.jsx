@@ -1,22 +1,36 @@
 import React, { useState } from "react";
 import { GraduationCap } from "lucide-react";
 import { gradeRows, studentCourses } from "../data/mockData.js";
+import {
+  getCourseResult,
+  getGradeClassName,
+  gradeCoefficients,
+  groupCoursesBySemester,
+  internshipRows,
+  transcriptCourses,
+  transcriptStudentInfo
+} from "../data/transcriptData.js";
 import { colors } from "../utils/theme.js";
 import { Badge, PrimaryButton, Sidebar, StatCard, TextInput, Topbar } from "./Shared.jsx";
 
 const navItems = [
   { key: "grades", label: "📊 Notlarım" },
   { key: "courses", label: "📅 Derslerim" },
-  { key: "profile", label: "👤 Profilim" }
+  { key: "profile", label: "👤 Profilim" },
+  { key: "transcript", label: "📄 Transkript" }
 ];
 
-export default function StudentPanel({ user, onLogout }) {
-  const [active, setActive] = useState("grades");
+export default function StudentPanel({ user, onLogout, initialActive = "grades", previewOnly = false }) {
+  const [active, setActive] = useState(initialActive);
   const [passwordForm, setPasswordForm] = useState({ oldPassword: "", newPassword: "", repeatPassword: "" });
 
   const updatePassword = (field, value) => {
     setPasswordForm((current) => ({ ...current, [field]: value }));
   };
+
+  if (active === "transcript") {
+    return <TranscriptView onBack={() => setActive("grades")} previewOnly={previewOnly} />;
+  }
 
   return (
     <div className="min-h-screen p-5" style={{ background: "linear-gradient(135deg, #f8fafc, #f0fdf4)" }}>
@@ -37,6 +51,90 @@ export default function StudentPanel({ user, onLogout }) {
         </main>
       </div>
     </div>
+  );
+}
+
+function TranscriptView({ onBack, previewOnly }) {
+  const semesters = groupCoursesBySemester(transcriptCourses);
+
+  return (
+    <main className="transcript-page">
+      <div className="transcript-document">
+        <div className="transcript-toolbar">
+          {!previewOnly && <button type="button" className="transcript-back" onClick={onBack}>← Geri Dön</button>}
+          <button type="button" className="transcript-print" onClick={() => window.print()}>🖨️ Yazdır</button>
+        </div>
+
+        <header className="transcript-title">
+          <h1>BAŞARI DURUM BELGESİ</h1>
+        </header>
+
+        <section className="transcript-info-grid">
+          {[transcriptStudentInfo.left, transcriptStudentInfo.right].map((column, index) => (
+            <div key={index}>
+              {column.map(([label, value]) => (
+                <p key={label}><strong>{label}</strong><span>:</span>{value}</p>
+              ))}
+            </div>
+          ))}
+        </section>
+
+        <section className="transcript-block">
+          <h2>STAJ BİLGİLERİ</h2>
+          <div className="transcript-table-scroll">
+            <table className="transcript-table">
+              <thead>
+                <tr>
+                  {["Staj Konusu", "Başlangıç", "Bitiş", "Staj Türü", "Gün Sayısı", "Firma Adı", "Firma Adresi"].map((head) => <th key={head}>{head}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {internshipRows.map((row) => (
+                  <tr key={`${row.start}-${row.company}`}>
+                    <td>{row.topic}</td><td>{row.start}</td><td>{row.end}</td><td>{row.type}</td><td>{row.days}</td><td>{row.company}</td><td>{row.address}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {Object.entries(semesters).map(([semester, rows]) => (
+          <section className="transcript-semester" key={semester}>
+            <h2>{semester}. Yarıyıl</h2>
+            <div className="transcript-table-scroll">
+              <table className="transcript-table">
+                <thead>
+                  <tr>
+                    {["Ders Kodu", "Ders Adı", "Ders Statüsü", "Öğretim Dili", "AKTS", "Başarı Notu", "Katsayı", "Başarı Durumu", "Açıklama"].map((head) => <th key={head}>{head}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((course) => {
+                    const result = getCourseResult(course.grade);
+                    return (
+                      <tr key={course.code}>
+                        <td>{course.code}</td>
+                        <td>{course.name}</td>
+                        <td>{course.status}</td>
+                        <td>{course.language}</td>
+                        <td>{course.ects}</td>
+                        <td className={`transcript-grade ${getGradeClassName(course.grade)}`}>{course.grade}</td>
+                        <td>{gradeCoefficients[course.grade]}</td>
+                        <td className={result === "Başarısız" ? "transcript-grade-fail" : ""}>{result}</td>
+                        <td></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
+
+        <footer className="transcript-footer">Öğrenci İşleri Sistemi — Belge Tarihi: 22/04/2026</footer>
+      </div>
+    </main>
   );
 }
 

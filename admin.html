@@ -25,6 +25,7 @@
         <button class="nav-item" type="button" data-view="add-course">📚 Ders Ekle</button>
         <button class="nav-item" type="button" data-view="student-list">👥 Öğrenci Listesi</button>
         <button class="nav-item" type="button" data-view="teacher-list">👨‍🏫 Öğretmen Listesi</button>
+        <button class="nav-item" type="button" data-view="transcript-management">📄 Transkript Yönetimi</button>
       </nav>
     </aside>
 
@@ -174,6 +175,85 @@
                 <tr data-search="selin güneş akd-1022 prof dr"><td>Selin Güneş</td><td>AKD-1022</td><td>Prof. Dr.</td><td>selin.gunes@okul.edu.tr</td><td class="action-cell"><button>Düzenle</button><button>Sil</button></td></tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <section class="view-section" data-section="transcript-management">
+          <div class="section-heading">
+            <p class="eyebrow">Akademik kayıt</p>
+            <h2>Transkript Yönetimi</h2>
+          </div>
+
+          <div class="transcript-admin-panel glass-card">
+            <div class="transcript-selector">
+              <label class="field">
+                <span>Öğrenci Seç</span>
+                <input id="transcriptStudentSearch" type="search" list="transcriptStudentOptions" placeholder="Öğrenci No veya Ad ile ara...">
+              </label>
+              <datalist id="transcriptStudentOptions">
+                <option value="220101045 — Mehmet Demir"></option>
+                <option value="220101046 — Zeynep Arslan"></option>
+                <option value="220101047 — Burak Çelik"></option>
+                <option value="220101048 — Selin Kaya"></option>
+                <option value="220101049 — Emre Yıldız"></option>
+              </datalist>
+              <label class="field">
+                <span>Liste</span>
+                <select id="transcriptStudentSelect">
+                  <option value="">Öğrenci seçiniz</option>
+                  <option value="220101045">220101045 — Mehmet Demir</option>
+                  <option value="220101046">220101046 — Zeynep Arslan</option>
+                  <option value="220101047">220101047 — Burak Çelik</option>
+                  <option value="220101048">220101048 — Selin Kaya</option>
+                  <option value="220101049">220101049 — Emre Yıldız</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="transcriptWorkspace" class="transcript-workspace" hidden>
+              <div class="transcript-management-top">
+                <div>
+                  <p class="selected-student" id="selectedTranscriptStudent"></p>
+                  <div class="gpa-summary" aria-live="polite">
+                    <span>Toplam AKTS: <strong id="totalEcts">0</strong></span>
+                    <span>Başarılan AKTS: <strong id="earnedEcts">0</strong></span>
+                    <span>GNO: <strong id="gpaValue">0.00</strong></span>
+                  </div>
+                </div>
+                <button class="primary-button preview-button" type="button" id="previewTranscript">👁 Transkript Görüntüle</button>
+              </div>
+
+              <div class="transcript-actions">
+                <button class="primary-button add-course-button" type="button" id="toggleTranscriptCourseForm">➕ Ders Ekle</button>
+              </div>
+
+              <form id="transcriptCourseForm" class="transcript-course-form" hidden>
+                <label class="field"><span>Yarıyıl</span><select id="newCourseSemester"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+                <label class="field"><span>Ders Kodu</span><input id="newCourseCode" type="text" placeholder="1010031"></label>
+                <label class="field"><span>Ders Adı</span><input id="newCourseName" type="text" placeholder="Ders adı"></label>
+                <label class="field"><span>AKTS</span><input id="newCourseEcts" type="number" min="0" max="30" placeholder="4"></label>
+                <label class="field"><span>Başarı Notu</span><select id="newCourseGrade"></select></label>
+                <button class="primary-button" type="submit">Ekle</button>
+              </form>
+
+              <div class="table-wrap transcript-management-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Yarıyıl</th>
+                      <th>Ders Kodu</th>
+                      <th>Ders Adı</th>
+                      <th>AKTS</th>
+                      <th>Başarı Notu</th>
+                      <th>Katsayı</th>
+                      <th>Başarı Durumu</th>
+                      <th>İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transcriptCourseRows"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
       </main>
