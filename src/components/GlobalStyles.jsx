@@ -39,7 +39,7 @@ export default function GlobalStyles() {
       .card-flat {
         background: white;
         border: 1px solid var(--gray-border);
-        border-radius: 16px;
+        border-radius: 14px;
         box-shadow: 0 18px 45px rgba(21, 83, 45, 0.08);
       }
       .accent-top { border-top: 4px solid var(--green-main); }
@@ -60,6 +60,48 @@ export default function GlobalStyles() {
       .modal-backdrop { animation: fadeOnly 180ms ease both; }
       .modal-card { animation: modalIn 220ms ease both; }
       .toast { animation: toastIn 220ms ease both; }
+      .bulk-grade-table th,
+      .csv-preview-table th {
+        color: #ffffff;
+        background: #166534;
+      }
+      .bulk-grade-table td,
+      .csv-preview-table td {
+        color: #1e293b;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .bulk-grade-table tbody tr:nth-child(even),
+      .csv-preview-table tbody tr:nth-child(even) {
+        background: #f9fafb;
+      }
+      .bulk-grade-table tbody tr:hover {
+        background: #f0fdf4;
+      }
+      .bulk-grade-input {
+        color: #1e293b;
+        border-color: #e2e8f0;
+        background: #ffffff;
+      }
+      .bulk-grade-input-invalid {
+        border-color: #dc2626 !important;
+        box-shadow: 0 0 0 3px rgba(254, 202, 202, 0.8);
+      }
+      .upload-zone {
+        background: #f0fdf4;
+        border-color: #16a34a;
+        transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      }
+      .upload-zone.is-dragging {
+        background: #dcfce7;
+        border-color: #166534;
+        box-shadow: 0 0 0 4px rgba(187, 247, 208, 0.8);
+      }
+      .csv-row-error {
+        background: #fee2e2 !important;
+      }
+      .csv-row-warning {
+        background: #fef3c7 !important;
+      }
       .transcript-page {
         min-height: 100vh;
         padding: 24px;
