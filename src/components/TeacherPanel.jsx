@@ -15,10 +15,10 @@ import { colors } from "../utils/theme.js";
 import { Badge, PrimaryButton, Sidebar, SelectInput, TextInput, Topbar } from "./Shared.jsx";
 
 const navItems = [
-  { key: "grade-entry", label: "Not Gir" },
-  { key: "students", label: "Öğrencilerim" },
-  { key: "courses", label: "Derslerim" },
-  { key: "profile", label: "Profilim" }
+  { key: "grade-entry", label: "📝 Not Gir" },
+  { key: "students", label: "👥 Öğrencilerim" },
+  { key: "courses", label: "📋 Derslerim" },
+  { key: "profile", label: "👤 Profilim" }
 ];
 
 const emptyGradeForm = {
