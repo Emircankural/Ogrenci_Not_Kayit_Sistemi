@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Settings } from "lucide-react";
 import { adminCourses, adminStudents, adminTeachers } from "../data/mockData.js";
 import {
@@ -11,6 +11,7 @@ import {
   transcriptStudents
 } from "../data/transcriptData.js";
 import { colors } from "../utils/theme.js";
+import { api } from "../services/api.js";
 import Modal from "./Modal.jsx";
 import { DangerButton, PrimaryButton, SelectInput, Sidebar, StatCard, TextInput, Topbar } from "./Shared.jsx";
 
@@ -35,6 +36,39 @@ export default function AdminPanel({ onLogout, showToast }) {
   const [teacherSearch, setTeacherSearch] = useState("");
   const [courseSearch, setCourseSearch] = useState("");
   const [modal, setModal] = useState(null);
+  const [stats, setStats] = useState({ studentCount: students.length, teacherCount: teachers.length, courseCount: courses.length, averageGrade: 72.4 });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let activeRequest = true;
+
+    async function loadDatabaseData() {
+      setIsLoading(true);
+      try {
+        const [studentRows, teacherRows, courseRows, statRows] = await Promise.all([
+          api.getStudents(),
+          api.getTeachers(),
+          api.getCourses(),
+          api.getStats()
+        ]);
+
+        if (!activeRequest) return;
+        setStudents(studentRows);
+        setTeachers(teacherRows);
+        setCourses(courseRows);
+        setStats(statRows);
+      } catch (error) {
+        showToast(`Veritabanı bağlantısı kurulamadı, demo veriler gösteriliyor: ${error.message}`);
+      } finally {
+        if (activeRequest) setIsLoading(false);
+      }
+    }
+
+    loadDatabaseData();
+    return () => {
+      activeRequest = false;
+    };
+  }, [showToast]);
 
   const filteredStudents = useMemo(() => filterRows(students, studentSearch, ["name", "no", "department", "email", "year"]), [students, studentSearch]);
   const filteredTeachers = useMemo(() => filterRows(teachers, teacherSearch, ["name", "registry", "department", "email", "title"]), [teachers, teacherSearch]);
@@ -53,33 +87,59 @@ export default function AdminPanel({ onLogout, showToast }) {
     setModal((current) => ({ ...current, form: { ...current.form, [field]: value } }));
   };
 
-  const saveModal = (event) => {
+  const saveModal = async (event) => {
     event.preventDefault();
     if (!modal) return;
     const nextRow = { ...modal.form };
     delete nextRow.password;
 
-    if (modal.type === "student") {
-      setStudents((current) => upsertRow(current, nextRow, modal));
-      showToast(modal.mode === "create" ? "Öğrenci kaydı oluşturuldu." : "Öğrenci bilgileri güncellendi.");
+    try {
+      if (modal.type === "student") {
+        validateStudent(nextRow);
+        const payload = { ...nextRow, classLevel: nextRow.classLevel || 1 };
+        const saved = modal.mode === "create" ? await api.createStudent(payload) : await api.updateStudent(modal.id, payload);
+        setStudents((current) => upsertRow(current, saved, modal));
+        showToast(modal.mode === "create" ? "Öğrenci kaydı veritabanına eklendi." : "Öğrenci bilgileri güncellendi.");
+      }
+      if (modal.type === "teacher") {
+        validateTeacher(nextRow);
+        const saved = modal.mode === "create" ? await api.createTeacher(nextRow) : await api.updateTeacher(modal.id, nextRow);
+        setTeachers((current) => upsertRow(current, saved, modal));
+        showToast(modal.mode === "create" ? "Öğretmen kaydı veritabanına eklendi." : "Öğretmen bilgileri güncellendi.");
+      }
+      if (modal.type === "course") {
+        validateCourse(nextRow);
+        const teacher = teachers.find((item) => item.name === nextRow.teacher);
+        const payload = { ...nextRow, credit: Number(nextRow.credit), teacherId: teacher?.id };
+        const saved = modal.mode === "create" ? await api.createCourse(payload) : await api.updateCourse(modal.id, payload);
+        setCourses((current) => upsertRow(current, { ...nextRow, ...saved, credit: Number(nextRow.credit) }, modal));
+        showToast(modal.mode === "create" ? "Ders kaydı veritabanına eklendi." : "Ders bilgileri güncellendi.");
+      }
+      setModal(null);
+    } catch (error) {
+      showToast(error.message);
     }
-    if (modal.type === "teacher") {
-      setTeachers((current) => upsertRow(current, nextRow, modal));
-      showToast(modal.mode === "create" ? "Öğretmen kaydı oluşturuldu." : "Öğretmen bilgileri güncellendi.");
-    }
-    if (modal.type === "course") {
-      setCourses((current) => upsertRow(current, { ...nextRow, credit: Number(nextRow.credit) }, modal));
-      showToast(modal.mode === "create" ? "Ders kaydı oluşturuldu." : "Ders bilgileri güncellendi.");
-    }
-    setModal(null);
   };
 
-  const removeRow = (type, id) => {
+  const removeRow = async (type, id) => {
     if (!window.confirm("Emin misiniz?")) return;
-    if (type === "student") setStudents((current) => current.filter((row) => row.id !== id));
-    if (type === "teacher") setTeachers((current) => current.filter((row) => row.id !== id));
-    if (type === "course") setCourses((current) => current.filter((row) => row.id !== id));
-    showToast("Kayıt silindi.");
+    try {
+      if (type === "student") {
+        await api.deleteStudent(id);
+        setStudents((current) => current.filter((row) => row.id !== id));
+      }
+      if (type === "teacher") {
+        await api.deleteTeacher(id);
+        setTeachers((current) => current.filter((row) => row.id !== id));
+      }
+      if (type === "course") {
+        await api.deleteCourse(id);
+        setCourses((current) => current.filter((row) => row.id !== id));
+      }
+      showToast("Kayıt veritabanından silindi.");
+    } catch (error) {
+      showToast(error.message);
+    }
   };
 
   return (
@@ -94,7 +154,7 @@ export default function AdminPanel({ onLogout, showToast }) {
       <div className="panel-layout grid grid-cols-[280px_minmax(0,1fr)] gap-6">
         <Sidebar items={navItems} active={active} setActive={setActive} />
         <main className="page-enter min-w-0">
-          {active === "stats" && <StatsView />}
+          {active === "stats" && <StatsView stats={stats} isLoading={isLoading} />}
           {active === "students" && (
             <StudentManagement
               rows={filteredStudents}
@@ -153,7 +213,7 @@ export default function AdminPanel({ onLogout, showToast }) {
   );
 }
 
-function StatsView() {
+function StatsView({ stats, isLoading }) {
   const bars = [
     ["Bilgisayar", 92],
     ["Endüstri", 66],
@@ -165,10 +225,10 @@ function StatsView() {
   return (
     <section className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Toplam Öğrenci" value="128" helper="+12 bu dönem" />
-        <StatCard label="Öğretmen" value="24" helper="Aktif akademisyen" />
-        <StatCard label="Ders" value="36" helper="Açık ders" />
-        <StatCard label="Ort. Not" value="72.4" helper="Genel ortalama" />
+        <StatCard label="Toplam Öğrenci" value={isLoading ? "..." : stats.studentCount} helper="Veritabanındaki kayıt" />
+        <StatCard label="Öğretmen" value={isLoading ? "..." : stats.teacherCount} helper="Aktif akademisyen" />
+        <StatCard label="Ders" value={isLoading ? "..." : stats.courseCount} helper="Açık ders" />
+        <StatCard label="Ort. Not" value={isLoading ? "..." : Number(stats.averageGrade || 0).toFixed(1)} helper="Genel ortalama" />
       </div>
       <div className="card-flat accent-left p-6">
         <h2 className="text-3xl font-bold" style={{ color: colors.textDark }}>Bölümlere Göre Öğrenci Dağılımı</h2>
@@ -537,6 +597,31 @@ function filterRows(rows, query, fields) {
   const clean = query.trim().toLocaleLowerCase("tr-TR");
   if (!clean) return rows;
   return rows.filter((row) => fields.some((field) => String(row[field] || "").toLocaleLowerCase("tr-TR").includes(clean)));
+}
+
+function validateStudent(row) {
+  if (!row.name?.trim() || !row.no?.trim() || !row.department?.trim()) {
+    throw new Error("Öğrenci için ad soyad, numara ve bölüm alanları zorunludur.");
+  }
+  if (row.year && !/^\d{4}$/.test(String(row.year))) {
+    throw new Error("Kayıt yılı 4 haneli olmalıdır.");
+  }
+}
+
+function validateTeacher(row) {
+  if (!row.name?.trim() || !row.email?.trim() || !row.department?.trim()) {
+    throw new Error("Öğretmen için ad soyad, e-posta ve bölüm alanları zorunludur.");
+  }
+  if (!row.email.includes("@")) {
+    throw new Error("Geçerli bir e-posta adresi giriniz.");
+  }
+}
+
+function validateCourse(row) {
+  const credit = Number(row.credit);
+  if (!row.name?.trim() || !Number.isInteger(credit) || credit < 1 || credit > 10 || !row.teacher?.trim()) {
+    throw new Error("Ders adı, 1-10 arası kredi ve öğretmen seçimi zorunludur.");
+  }
 }
 
 function upsertRow(rows, nextRow, modal) {

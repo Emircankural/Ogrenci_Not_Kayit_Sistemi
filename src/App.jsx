@@ -5,6 +5,7 @@ import Login from "./components/Login.jsx";
 import StudentPanel from "./components/StudentPanel.jsx";
 import TeacherPanel from "./components/TeacherPanel.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
+import { api } from "./services/api.js";
 
 const DEMO_USERS = {
   ogrenci: { username: "ogrenci1", password: "123", name: "Ahmet Yılmaz" },
@@ -20,8 +21,17 @@ export default function App() {
 
   const showToast = useCallback((message) => setToast(message), []);
 
-  const handleLogin = ({ role, username, password }) => {
+  const handleLogin = async ({ role, username, password }) => {
     const cleanUsername = username.trim();
+
+    try {
+      const account = await api.login({ role, username: cleanUsername, password });
+      setUser({ role: account.role, name: account.name || account.username });
+      setScreen(account.role);
+      return { ok: true };
+    } catch (_error) {
+      // Backend kapalıyken mevcut demo akışı bozulmasın diye eski girişler yedek olarak korunur.
+    }
 
     if (cleanUsername === DEMO_USERS.admin.username && password === DEMO_USERS.admin.password) {
       setUser({ role: "admin", name: DEMO_USERS.admin.name });
