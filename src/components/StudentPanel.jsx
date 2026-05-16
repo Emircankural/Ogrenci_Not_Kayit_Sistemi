@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GraduationCap } from "lucide-react";
 import { gradeRows, studentCourses } from "../data/mockData.js";
 import {
@@ -11,6 +11,7 @@ import {
   transcriptStudentInfo
 } from "../data/transcriptData.js";
 import { colors } from "../utils/theme.js";
+import { api } from "../services/api.js";
 import { Badge, PrimaryButton, Sidebar, StatCard, TextInput, Topbar } from "./Shared.jsx";
 
 const navItems = [
@@ -23,6 +24,40 @@ const navItems = [
 export default function StudentPanel({ user, onLogout, initialActive = "grades", previewOnly = false }) {
   const [active, setActive] = useState(initialActive);
   const [passwordForm, setPasswordForm] = useState({ oldPassword: "", newPassword: "", repeatPassword: "" });
+  const [grades, setGrades] = useState(gradeRows);
+  const [courses, setCourses] = useState(studentCourses);
+
+  useEffect(() => {
+    let activeRequest = true;
+
+    async function loadStudentData() {
+      try {
+        const [gradeData, courseData] = await Promise.all([api.getGrades(), api.getCourses()]);
+        if (!activeRequest) return;
+        setGrades(gradeData.map((row) => ({
+          course: row.course,
+          midterm: Number(row.midterm),
+          final: Number(row.final),
+          average: Number(row.average),
+          status: Number(row.average) >= 50 ? "Geçti" : "Kaldı"
+        })));
+        setCourses(courseData.map((course) => ({
+          code: course.code,
+          name: course.name,
+          teacher: course.teacher,
+          credit: course.credit,
+          time: "Ders programı"
+        })));
+      } catch (_error) {
+        // API çalışmıyorsa öğrenci ekranı mevcut demo verisiyle açılır.
+      }
+    }
+
+    loadStudentData();
+    return () => {
+      activeRequest = false;
+    };
+  }, []);
 
   const updatePassword = (field, value) => {
     setPasswordForm((current) => ({ ...current, [field]: value }));
@@ -43,8 +78,8 @@ export default function StudentPanel({ user, onLogout, initialActive = "grades",
       <div className="panel-layout grid grid-cols-[280px_minmax(0,1fr)] gap-6">
         <Sidebar items={navItems} active={active} setActive={setActive} />
         <main className="page-enter min-w-0">
-          {active === "grades" && <GradesView />}
-          {active === "courses" && <CoursesView />}
+          {active === "grades" && <GradesView rows={grades} />}
+          {active === "courses" && <CoursesView courses={courses} />}
           {active === "profile" && (
             <ProfileView form={passwordForm} updateField={updatePassword} />
           )}
@@ -138,7 +173,7 @@ function TranscriptView({ onBack, previewOnly }) {
   );
 }
 
-function GradesView() {
+function GradesView({ rows }) {
   return (
     <section className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -158,8 +193,8 @@ function GradesView() {
             </tr>
           </thead>
           <tbody>
-            {gradeRows.map((row) => (
-              <tr key={row.course} className="border-t" style={{ borderColor: colors.grayBorder }}>
+            {rows.map((row, index) => (
+              <tr key={`${row.course}-${index}`} className="border-t" style={{ borderColor: colors.grayBorder }}>
                 <td className="p-4 font-bold">{row.course}</td>
                 <td className="p-4">{row.midterm}</td>
                 <td className="p-4">{row.final}</td>
@@ -174,10 +209,10 @@ function GradesView() {
   );
 }
 
-function CoursesView() {
+function CoursesView({ courses }) {
   return (
     <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {studentCourses.map((course) => (
+      {courses.map((course) => (
         <article key={course.code} className="card-flat accent-top p-5">
           <span className="text-sm font-extrabold" style={{ color: colors.greenMain }}>{course.code}</span>
           <h2 className="mt-2 text-2xl font-bold" style={{ color: colors.textDark }}>{course.name}</h2>

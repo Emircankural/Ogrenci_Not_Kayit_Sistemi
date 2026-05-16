@@ -13,15 +13,18 @@ export default function Login({ onLogin }) {
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
     setHasError(false);
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    const result = onLogin({ role: selectedRole, ...form });
+    setIsSubmitting(true);
+    const result = await onLogin({ role: selectedRole, ...form });
+    setIsSubmitting(false);
     if (!result.ok) setHasError(true);
   };
 
@@ -120,7 +123,7 @@ export default function Login({ onLogin }) {
                   </div>
                 </label>
                 {hasError && <p className="text-sm font-extrabold" style={{ color: colors.redDanger }}>Kullanıcı adı veya şifre hatalı</p>}
-                <PrimaryButton type="submit" className="w-full">Giriş Yap</PrimaryButton>
+                <PrimaryButton type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting ? "Kontrol ediliyor..." : "Giriş Yap"}</PrimaryButton>
               </form>
             )}
           </div>

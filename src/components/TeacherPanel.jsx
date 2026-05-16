@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { teacherStudents } from "../data/mockData.js";
 import { colors } from "../utils/theme.js";
+import { api } from "../services/api.js";
 import { Badge, PrimaryButton, Sidebar, SelectInput, TextInput, Topbar } from "./Shared.jsx";
 
 const navItems = [
@@ -121,6 +122,8 @@ export default function TeacherPanel({ user, onLogout, showToast }) {
   const [active, setActive] = useState("grade-entry");
   const [gradeForm, setGradeForm] = useState(emptyGradeForm);
   const [students, setStudents] = useState(teacherStudents);
+  const [dbStudents, setDbStudents] = useState([]);
+  const [dbCourses, setDbCourses] = useState([]);
   const [courseCatalog, setCourseCatalog] = useState(initialCourseCatalog);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -138,12 +141,42 @@ export default function TeacherPanel({ user, onLogout, showToast }) {
   }, [courseCatalog]);
 
   const gradeStudents = useMemo(() => {
+    if (dbStudents.length > 0) {
+      return dbStudents.map((student) => ({ id: student.id, name: student.name, no: student.no }));
+    }
+
     const unique = new Map();
     Object.values(courseCatalog).forEach((course) => {
       course.ogrenciler.forEach((student) => unique.set(student.no, { id: student.no, name: student.ad, no: student.no }));
     });
     return Array.from(unique.values());
-  }, [courseCatalog]);
+  }, [courseCatalog, dbStudents]);
+
+  useEffect(() => {
+    let activeRequest = true;
+
+    async function loadTeacherData() {
+      try {
+        const [gradeRows, studentRows, courseRows] = await Promise.all([
+          api.getGrades(),
+          api.getStudents(),
+          api.getCourses()
+        ]);
+
+        if (!activeRequest) return;
+        setStudents(gradeRows);
+        setDbStudents(studentRows);
+        setDbCourses(courseRows);
+      } catch (_error) {
+        // API kapalıysa öğretmen ekranındaki mevcut demo veri akışı çalışmaya devam eder.
+      }
+    }
+
+    loadTeacherData();
+    return () => {
+      activeRequest = false;
+    };
+  }, []);
 
   const average = useMemo(() => {
     const midterm = Number(gradeForm.midterm) || 0;
@@ -160,10 +193,31 @@ export default function TeacherPanel({ user, onLogout, showToast }) {
     setGradeForm((current) => ({ ...current, [field]: value }));
   };
 
-  const saveGrade = (event) => {
+  const saveGrade = async (event) => {
     event.preventDefault();
-    showToast("Not kaydı başarıyla oluşturuldu.");
-    setGradeForm(emptyGradeForm);
+    const selectedStudent = dbStudents.find((student) => student.no === gradeForm.student);
+    const selectedCourseName = courseCatalog[gradeForm.course]?.dersAdi;
+    const selectedCourse = dbCourses.find((course) => course.name === selectedCourseName);
+
+    if (!selectedStudent || !selectedCourse || !isValidScore(gradeForm.midterm) || !isValidScore(gradeForm.final)) {
+      showToast("Ders, öğrenci, vize ve final alanlarını eksiksiz girin.");
+      return;
+    }
+
+    try {
+      await api.createGrade({
+        studentId: selectedStudent.id,
+        courseId: selectedCourse.id,
+        midterm: gradeForm.midterm,
+        final: gradeForm.final
+      });
+      const gradeRows = await api.getGrades();
+      setStudents(gradeRows);
+      showToast("Not kaydı veritabanına eklendi.");
+      setGradeForm(emptyGradeForm);
+    } catch (error) {
+      showToast(error.message);
+    }
   };
 
   const saveBulkGrades = ({ courseCode, componentName, values, filledCount, skippedCount }) => {
@@ -198,11 +252,33 @@ export default function TeacherPanel({ user, onLogout, showToast }) {
     setEditRow({ ...student });
   };
 
-  const saveInlineEdit = () => {
-    setStudents((current) => current.map((student) => student.id === editingId ? { ...editRow } : student));
-    setEditingId(null);
-    setEditRow(null);
-    showToast("Öğrenci notu güncellendi.");
+  const saveInlineEdit = async () => {
+    if (!isValidScore(editRow.midterm) || !isValidScore(editRow.final)) {
+      showToast("Vize ve final 0-100 aralığında olmalıdır.");
+      return;
+    }
+
+    try {
+      await api.updateGrade(editingId, { midterm: editRow.midterm, final: editRow.final });
+      setStudents((current) => current.map((student) => student.id === editingId ? { ...editRow } : student));
+      setEditingId(null);
+      setEditRow(null);
+      showToast("Öğrenci notu veritabanında güncellendi.");
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+
+  const deleteGrade = async (id) => {
+    if (!window.confirm("Bu not kaydı silinsin mi?")) return;
+
+    try {
+      await api.deleteGrade(id);
+      setStudents((current) => current.filter((student) => student.id !== id));
+      showToast("Not kaydı veritabanından silindi.");
+    } catch (error) {
+      showToast(error.message);
+    }
   };
 
   const openGradeEntryForCourse = (code) => {
@@ -248,6 +324,7 @@ export default function TeacherPanel({ user, onLogout, showToast }) {
               setEditRow={setEditRow}
               startEdit={startEdit}
               saveInlineEdit={saveInlineEdit}
+              onDelete={deleteGrade}
               cancelEdit={() => {
                 setEditingId(null);
                 setEditRow(null);
@@ -803,7 +880,7 @@ function ScoreStatusBadge({ value }) {
   );
 }
 
-function StudentsView({ search, setSearch, students, editingId, editRow, setEditRow, startEdit, saveInlineEdit, cancelEdit }) {
+function StudentsView({ search, setSearch, students, editingId, editRow, setEditRow, startEdit, saveInlineEdit, onDelete, cancelEdit }) {
   return (
     <section className="grid gap-4">
       <TextInput label="Arama" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ad, no veya ders ara" />
@@ -846,7 +923,10 @@ function StudentsView({ search, setSearch, students, editingId, editRow, setEdit
                         <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.redDanger }} onClick={cancelEdit}>İptal</button>
                       </div>
                     ) : (
-                      <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.greenMain }} onClick={() => startEdit(student)}>Düzenle</button>
+                      <div className="flex gap-2">
+                        <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.greenMain }} onClick={() => startEdit(student)}>Düzenle</button>
+                        <button type="button" className="rounded-lg px-3 py-2 font-bold text-white" style={{ background: colors.redDanger }} onClick={() => onDelete(student.id)}>Sil</button>
+                      </div>
                     )}
                   </td>
                 </tr>
