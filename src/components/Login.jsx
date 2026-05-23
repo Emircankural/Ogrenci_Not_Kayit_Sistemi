@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BookOpen, Eye, EyeOff, GraduationCap, School, Shapes } from "lucide-react";
+import { BookOpen, Eye, EyeOff, GraduationCap, School, Settings, Shapes } from "lucide-react";
 import { colors, fonts } from "../utils/theme.js";
 import { PrimaryButton, TextInput } from "./Shared.jsx";
 
@@ -72,9 +72,10 @@ export default function Login({ onLogin }) {
               <div className="grid gap-4">
                 <RoleButton icon={<GraduationCap />} label="Öğrenci Girişi" onClick={() => setSelectedRole("ogrenci")} />
                 <RoleButton icon={<School />} label="Öğretmen Girişi" onClick={() => setSelectedRole("ogretmen")} />
+                <RoleButton icon={<Settings />} label="Yonetici Girisi" onClick={() => setSelectedRole("admin")} />
                 <div className="rounded-2xl border p-4 text-sm font-semibold" style={{ borderColor: colors.grayBorder, background: colors.grayLight, color: colors.textMid }}>
-                  <p><b>Öğrenci:</b> ogrenci1 / 123</p>
-                  <p><b>Öğretmen:</b> ogretmen1 / 123</p>
+                  <p><b>Öğrenci:</b> 202401034 / 123</p>
+                  <p><b>Öğretmen:</b> ayse.kaya@kocaeli.edu.tr / 123</p>
                   <p><b>Admin:</b> admin / admin</p>
                 </div>
               </div>
@@ -92,7 +93,7 @@ export default function Login({ onLogin }) {
                 >
                   ← Geri
                 </button>
-                <h3 className="text-2xl font-bold" style={{ color: colors.textDark }}>{roleLabels[selectedRole]}</h3>
+                <h3 className="text-2xl font-bold" style={{ color: colors.textDark }}>{roleLabels[selectedRole] || "Yonetici Girisi"}</h3>
                 <TextInput
                   label="Kullanıcı Adı"
                   value={form.username}

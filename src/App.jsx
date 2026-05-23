@@ -8,8 +8,8 @@ import AdminPanel from "./components/AdminPanel.jsx";
 import { api } from "./services/api.js";
 
 const DEMO_USERS = {
-  ogrenci: { username: "ogrenci1", password: "123", name: "Ahmet Yılmaz" },
-  ogretmen: { username: "ogretmen1", password: "123", name: "Dr. Ayşe Kaya" },
+  ogrenci: { username: "202401034", password: "123", name: "Ahmet Yılmaz" },
+  ogretmen: { username: "ayse.kaya@kocaeli.edu.tr", password: "123", name: "Dr. Ayşe Kaya" },
   admin: { username: "admin", password: "admin", name: "Admin" }
 };
 

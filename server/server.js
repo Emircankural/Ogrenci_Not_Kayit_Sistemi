@@ -6,8 +6,18 @@ const db = require("./config/database");
 
 const app = express();
 const port = Number(process.env.API_PORT || 3001);
+const allowedOrigins = new Set([
+  process.env.CLIENT_ORIGIN,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173"
+].filter(Boolean));
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || true }));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(null, false);
+  }
+}));
 app.use(express.json());
 
 const asyncRoute = (handler) => (req, res, next) => {
@@ -30,6 +40,37 @@ function studentDateFromYear(year) {
 
 function sendValidation(res, message) {
   return res.status(400).json({ message });
+}
+
+const clean = (value) => String(value || "").trim();
+const defaultPassword = (password) => clean(password) || "123";
+const teacherUsername = ({ email }) => clean(email);
+
+async function upsertLoginAccount(connection, username, password, role, previousUsername = username) {
+  const nextUsername = clean(username);
+  if (!nextUsername) return;
+
+  const params = [nextUsername, defaultPassword(password), role];
+  if (previousUsername && clean(previousUsername) !== nextUsername) {
+    const [result] = await connection.execute(
+      "UPDATE kullanicilar SET kullanici_adi = ?, sifre = ?, rol = ? WHERE kullanici_adi = ? AND rol = ?",
+      [...params, clean(previousUsername), role]
+    );
+    if (result.affectedRows > 0) return;
+  }
+
+  if (password !== undefined && clean(password) !== "") {
+    await connection.execute(
+      "INSERT INTO kullanicilar (kullanici_adi, sifre, rol) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE sifre = VALUES(sifre), rol = VALUES(rol)",
+      params
+    );
+    return;
+  }
+
+  await connection.execute(
+    "INSERT INTO kullanicilar (kullanici_adi, sifre, rol) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE rol = VALUES(rol)",
+    params
+  );
 }
 
 app.get("/api/health", asyncRoute(async (_req, res) => {
@@ -84,7 +125,7 @@ app.get("/api/students", asyncRoute(async (_req, res) => {
 }));
 
 app.post("/api/students", asyncRoute(async (req, res) => {
-  const { name, no, department, year, classLevel } = req.body;
+  const { name, no, department, year, classLevel, password } = req.body;
   if (!required(name) || !required(no) || !required(department)) return sendValidation(res, "Ad soyad, öğrenci no ve bölüm zorunludur.");
 
   const { ad, soyad } = splitFullName(name);
@@ -94,16 +135,27 @@ app.post("/api/students", asyncRoute(async (req, res) => {
   const sinif = Number(classLevel || 1);
   if (!Number.isInteger(sinif) || sinif < 1 || sinif > 4) return sendValidation(res, "Sınıf 1 ile 4 arasında olmalıdır.");
 
-  const [result] = await db.execute(
-    "INSERT INTO ogrenciler (ad, soyad, numara, bolum, sinif, kayit_tarihi) VALUES (?, ?, ?, ?, ?, COALESCE(?, CURRENT_DATE))",
-    [ad, soyad, String(no).trim(), String(department).trim(), sinif, kayitTarihi]
-  );
-  const [[created]] = await db.query("SELECT ogrenci_id AS id, CONCAT(ad, ' ', soyad) AS name, numara AS no, bolum AS department, sinif AS classLevel, YEAR(kayit_tarihi) AS year FROM ogrenciler WHERE ogrenci_id = ?", [result.insertId]);
-  res.status(201).json(created);
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.execute(
+      "INSERT INTO ogrenciler (ad, soyad, numara, bolum, sinif, kayit_tarihi) VALUES (?, ?, ?, ?, ?, COALESCE(?, CURRENT_DATE))",
+      [ad, soyad, clean(no), clean(department), sinif, kayitTarihi]
+    );
+    await upsertLoginAccount(connection, no, password, "ogrenci");
+    const [[created]] = await connection.query("SELECT ogrenci_id AS id, CONCAT(ad, ' ', soyad) AS name, numara AS no, bolum AS department, sinif AS classLevel, YEAR(kayit_tarihi) AS year FROM ogrenciler WHERE ogrenci_id = ?", [result.insertId]);
+    await connection.commit();
+    res.status(201).json(created);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.put("/api/students/:id", asyncRoute(async (req, res) => {
-  const { name, no, department, year, classLevel } = req.body;
+  const { name, no, department, year, classLevel, password } = req.body;
   if (!required(name) || !required(no) || !required(department)) return sendValidation(res, "Ad soyad, öğrenci no ve bölüm zorunludur.");
 
   const { ad, soyad } = splitFullName(name);
@@ -111,18 +163,50 @@ app.put("/api/students/:id", asyncRoute(async (req, res) => {
 
   const kayitTarihi = studentDateFromYear(year);
   const sinif = Number(classLevel || 1);
-  const [result] = await db.execute(
-    "UPDATE ogrenciler SET ad = ?, soyad = ?, numara = ?, bolum = ?, sinif = ?, kayit_tarihi = COALESCE(?, kayit_tarihi) WHERE ogrenci_id = ?",
-    [ad, soyad, String(no).trim(), String(department).trim(), sinif, kayitTarihi, req.params.id]
-  );
-  if (result.affectedRows === 0) return res.status(404).json({ message: "Öğrenci bulunamadı." });
-  res.json({ id: Number(req.params.id), name, no, department, year, classLevel: sinif });
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [[existing]] = await connection.query("SELECT numara FROM ogrenciler WHERE ogrenci_id = ?", [req.params.id]);
+    if (!existing) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Öğrenci bulunamadı." });
+    }
+    const [result] = await connection.execute(
+      "UPDATE ogrenciler SET ad = ?, soyad = ?, numara = ?, bolum = ?, sinif = ?, kayit_tarihi = COALESCE(?, kayit_tarihi) WHERE ogrenci_id = ?",
+      [ad, soyad, clean(no), clean(department), sinif, kayitTarihi, req.params.id]
+    );
+    await upsertLoginAccount(connection, no, password, "ogrenci", existing.numara);
+    await connection.commit();
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Öğrenci bulunamadı." });
+    res.json({ id: Number(req.params.id), name, no, department, year, classLevel: sinif });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.delete("/api/students/:id", asyncRoute(async (req, res) => {
-  const [result] = await db.execute("DELETE FROM ogrenciler WHERE ogrenci_id = ?", [req.params.id]);
-  if (result.affectedRows === 0) return res.status(404).json({ message: "Öğrenci bulunamadı." });
-  res.status(204).end();
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [[existing]] = await connection.query("SELECT numara FROM ogrenciler WHERE ogrenci_id = ?", [req.params.id]);
+    if (!existing) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Öğrenci bulunamadı." });
+    }
+    const [result] = await connection.execute("DELETE FROM ogrenciler WHERE ogrenci_id = ?", [req.params.id]);
+    await connection.execute("DELETE FROM kullanicilar WHERE kullanici_adi = ? AND rol = 'ogrenci'", [existing.numara]);
+    await connection.commit();
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Öğrenci bulunamadı." });
+    res.status(204).end();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.get("/api/teachers", asyncRoute(async (_req, res) => {
@@ -141,32 +225,79 @@ app.get("/api/teachers", asyncRoute(async (_req, res) => {
 }));
 
 app.post("/api/teachers", asyncRoute(async (req, res) => {
-  const { name, email, department, title } = req.body;
+  const { name, email, department, title, password } = req.body;
   if (!required(name) || !required(email) || !required(department)) return sendValidation(res, "Ad soyad, e-posta ve bölüm zorunludur.");
 
   const { ad, soyad } = splitFullName(name);
   if (!soyad) return sendValidation(res, "Ad soyad alanı en az iki kelime olmalıdır.");
   const brans = String(department || title).trim();
-  const [result] = await db.execute("INSERT INTO ogretmenler (ad, soyad, brans, email) VALUES (?, ?, ?, ?)", [ad, soyad, brans, String(email).trim()]);
-  res.status(201).json({ id: result.insertId, name, registry: `AKD-${String(result.insertId).padStart(4, "0")}`, title: brans, department: brans, email });
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.execute("INSERT INTO ogretmenler (ad, soyad, brans, email) VALUES (?, ?, ?, ?)", [ad, soyad, brans, clean(email)]);
+    const generatedRegistry = `AKD-${String(result.insertId).padStart(4, "0")}`;
+    const username = teacherUsername({ email });
+    await upsertLoginAccount(connection, username, password, "ogretmen");
+    await connection.commit();
+    res.status(201).json({ id: result.insertId, name, registry: generatedRegistry, title: brans, department: brans, email });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.put("/api/teachers/:id", asyncRoute(async (req, res) => {
-  const { name, email, department, title } = req.body;
+  const { name, email, department, title, password } = req.body;
   if (!required(name) || !required(email) || !required(department)) return sendValidation(res, "Ad soyad, e-posta ve bölüm zorunludur.");
 
   const { ad, soyad } = splitFullName(name);
   if (!soyad) return sendValidation(res, "Ad soyad alanı en az iki kelime olmalıdır.");
   const brans = String(department || title).trim();
-  const [result] = await db.execute("UPDATE ogretmenler SET ad = ?, soyad = ?, brans = ?, email = ? WHERE ogretmen_id = ?", [ad, soyad, brans, String(email).trim(), req.params.id]);
-  if (result.affectedRows === 0) return res.status(404).json({ message: "Öğretmen bulunamadı." });
-  res.json({ id: Number(req.params.id), name, registry: `AKD-${String(req.params.id).padStart(4, "0")}`, title: brans, department: brans, email });
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [[existing]] = await connection.query("SELECT email FROM ogretmenler WHERE ogretmen_id = ?", [req.params.id]);
+    if (!existing) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Öğretmen bulunamadı." });
+    }
+    const oldGeneratedRegistry = `AKD-${String(req.params.id).padStart(4, "0")}`;
+    const [result] = await connection.execute("UPDATE ogretmenler SET ad = ?, soyad = ?, brans = ?, email = ? WHERE ogretmen_id = ?", [ad, soyad, brans, clean(email), req.params.id]);
+    const username = teacherUsername({ email });
+    await upsertLoginAccount(connection, username, password, "ogretmen", existing.email);
+    await connection.commit();
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Öğretmen bulunamadı." });
+    res.json({ id: Number(req.params.id), name, registry: oldGeneratedRegistry, title: brans, department: brans, email });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.delete("/api/teachers/:id", asyncRoute(async (req, res) => {
-  const [result] = await db.execute("DELETE FROM ogretmenler WHERE ogretmen_id = ?", [req.params.id]);
-  if (result.affectedRows === 0) return res.status(404).json({ message: "Öğretmen bulunamadı." });
-  res.status(204).end();
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [[existing]] = await connection.query("SELECT email FROM ogretmenler WHERE ogretmen_id = ?", [req.params.id]);
+    if (!existing) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Öğretmen bulunamadı." });
+    }
+    const [result] = await connection.execute("DELETE FROM ogretmenler WHERE ogretmen_id = ?", [req.params.id]);
+    await connection.execute("DELETE FROM kullanicilar WHERE rol = 'ogretmen' AND kullanici_adi = ?", [existing.email]);
+    await connection.commit();
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Öğretmen bulunamadı." });
+    res.status(204).end();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }));
 
 app.get("/api/courses", asyncRoute(async (_req, res) => {

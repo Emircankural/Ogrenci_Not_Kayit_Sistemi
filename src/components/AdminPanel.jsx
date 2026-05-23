@@ -91,7 +91,6 @@ export default function AdminPanel({ onLogout, showToast }) {
     event.preventDefault();
     if (!modal) return;
     const nextRow = { ...modal.form };
-    delete nextRow.password;
 
     try {
       if (modal.type === "student") {
